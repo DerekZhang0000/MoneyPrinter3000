@@ -1,4 +1,4 @@
-import sqlite3
+import sqlite3 as sql
 import yfinance as yf
 import pandas as pd
 
@@ -6,7 +6,7 @@ class StockDatabase:
 
     # Methods for StockDatabase initialization
     def __init__(self):
-        self.connection = sqlite3.connect("stockData.db")
+        self.connection = sql.connect("stockData.db")
         self.cursor = self.connection.cursor()
 
     def __del__(self):
@@ -15,7 +15,7 @@ class StockDatabase:
 
     # Methods based on sqlite3
     def connect(self):
-        self.connection = sqlite3.connect("stockData.db")
+        self.connection = sql.connect("stockData.db")
         self.cursor = self.connection.cursor()
 
     def execute(self, command):
@@ -40,6 +40,7 @@ class StockDatabase:
             data.set_index('Date')
         self.connection.commit()
 
+    # Updates ticker history, or creates new table if not existing
     def updateTickerHistory(self, tickerList):
         if type(tickerList) != list:
             tickerList = [tickerList]
@@ -55,9 +56,13 @@ class StockDatabase:
             diffRows = list(diffTable.itertuples(index=True, name=None))
             for i in range(len(diffTable.index)):
                 row = tuple([str(diffRows[i][0])] + list(diffRows[i][1:]))
-                self.cursor.execute("INSERT INTO {}_history VALUES(?,?,?,?,?,?,?,?)".format(ticker), row)
+                self.cursor.execute("INSERT INTO '%s_history' VALUES(?,?,?,?,?,?,?,?)" % row)
             self.connection.commit()
 
-    # Return history (single row) of a given ticker on a specific date
+    # Returns history (single row) of a given ticker on a specific date
     def getTickerHistoryOnDate(self, ticker, date):
         return self.execute("SELECT * FROM %s_history WHERE Date = '%s'" % (ticker, date)).fetchall()
+
+    # Returns history between two dates (inclusive)
+    def getTickerHistoryBetweenDates(self, ticker, lowerDate, upperDate):
+        return self.execute("SELECT * FROM %s_history WHERE Date BETWEEN '%s' AND '%s'" % (ticker, lowerDate, upperDate)).fetchall()
