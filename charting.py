@@ -6,9 +6,6 @@ from plotly.subplots import make_subplots
 
 class Chart(TechnicalAnalysis):
 
-    def __init__(self, db):
-        self.db = db
-
     def showChart(self, ticker, lowerDate, upperDate, **kwargs):
 
         curRow = 1
@@ -28,7 +25,7 @@ class Chart(TechnicalAnalysis):
         #     plotTitles.append("MACD")
         #     rowWidths.insert(0, 0.1)
         fig = make_subplots(rows=plotRows, cols=1, shared_xaxes=True, subplot_titles=plotTitles, vertical_spacing=0.1, row_width=rowWidths)
-        histRows = self.db.getTickerHistoryBetweenDates(ticker, lowerDate, upperDate)
+        histRows = self.getPriceHistoryBetween(ticker, lowerDate, upperDate)
 
         # Initializing common values
         dates, opens, highs, lows, closes, volumes = [[], [], [], [], [], []]
@@ -45,7 +42,8 @@ class Chart(TechnicalAnalysis):
                                      open=opens,
                                      high=highs,
                                      low=lows,
-                                     close=closes),
+                                     close=closes,
+                                     name="Candlestick"),
                          row=1, col=1)
 
         # Volume chart
@@ -64,41 +62,7 @@ class Chart(TechnicalAnalysis):
             # fig.append_trace(go.Bar(x=dates, y=volumes, showlegend=False),
             #                         row=curRow, col=1)
 
-        # Bollinger bands, uses default n=20
-        if("bBands" not in kwargs.keys() or kwargs["bBands"] == True):
-            lowerBand, movingAverage, upperBand = [[], [], []]
-
-            for row in histRows:
-                bollingerBands = self.getBollingerBands(ticker, row[0])
-                lowerBand.append(bollingerBands[0])
-                movingAverage.append(bollingerBands[1])
-                upperBand.append(bollingerBands[2])
-
-            # Moving Average (middle band)
-            fig.append_trace(go.Scatter(x=dates,
-                                    y=movingAverage,
-                                    line_color='red',
-                                    name='20MA'),
-                             row=1, col=1)
-
-            # Upper Bound
-            fig.append_trace(go.Scatter(x=dates,
-                                    y=upperBand,
-                                    line_color='lightblue',
-                                    name='Upper Band',
-                                    opacity=0.5),
-                             row=1, col=1)
-
-            # Lower Bound
-            fig.append_trace(go.Scatter(x=dates,
-                                    y=lowerBand,
-                                    line_color='lightblue',
-                                    fill='tonexty',
-                                    name='Lower Band',
-                                    opacity=0.5),
-                             row=1, col=1)
-
-        # Simple moving average, uses default n=50, n=200
+        # Simple Moving Averages
         if("smas" not in kwargs.keys() or kwargs["smas"] == True):
             fastMovingAverage, slowMovingAverage = [[], []]
 
@@ -116,6 +80,90 @@ class Chart(TechnicalAnalysis):
                                      y=slowMovingAverage,
                                      line_color='blue',
                                      name='200MA'),
+                             row=1, col=1)
+
+        # Bollinger Bands
+        if("bBands" not in kwargs.keys() or kwargs["bBands"] == True):
+            lowerBand, movingAverage, upperBand = [[], [], []]
+
+            for row in histRows:
+                bollingerBands = self.getBollingerBands(ticker, row[0])
+                lowerBand.append(bollingerBands[0])
+                movingAverage.append(bollingerBands[1])
+                upperBand.append(bollingerBands[2])
+
+            # Moving Average (middle band)
+            fig.append_trace(go.Scatter(x=dates,
+                                    y=movingAverage,
+                                    line_color='goldenrod',
+                                    name='20MA'),
+                             row=1, col=1)
+
+            # Upper Band
+            fig.append_trace(go.Scatter(x=dates,
+                                    y=upperBand,
+                                    line_color='lightblue',
+                                    name='Upper Band',
+                                    opacity=0.5),
+                             row=1, col=1)
+
+            # Lower Band
+            fig.append_trace(go.Scatter(x=dates,
+                                    y=lowerBand,
+                                    line_color='lightblue',
+                                    fill='tonexty',
+                                    name='Lower Band',
+                                    opacity=0.5),
+                             row=1, col=1)
+
+        # Ichimoku Cloud
+        # NOTE: Leading and lagging spans are not shifted
+        if("cloud" not in kwargs.keys() or kwargs["cloud"] == True):
+            leadingSpanA, leadingSpanB, conversionLine, baseLine, laggingSpan = [[], [], [], [], []]
+
+            for row in histRows:
+                ichimokuCloud = self.getIchimokuCloud(ticker, row[0])
+                leadingSpanA.append(ichimokuCloud[0])
+                leadingSpanB.append(ichimokuCloud[1])
+                conversionLine.append(ichimokuCloud[2])
+                baseLine.append(ichimokuCloud[3])
+                laggingSpan.append(ichimokuCloud[4])
+
+            # Leading Span A
+            fig.append_trace(go.Scatter(x=dates,
+                                    y=leadingSpanA,
+                                    line_color='green',
+                                    name='Leading Span A'),
+                             row=1, col=1)
+
+            # Leading Span B
+            fig.append_trace(go.Scatter(x=dates,
+                                    y=conversionLine,
+                                    line_color='red',
+                                    name='Leading Span B'),
+                             row=1, col=1)
+
+            # Conversion Line
+            fig.append_trace(go.Scatter(x=dates,
+                                    y=conversionLine,
+                                    line_color='salmon',
+                                    name='Conversion Line'),
+                             row=1, col=1)
+
+            # Base Line
+            fig.append_trace(go.Scatter(x=dates,
+                                    y=baseLine,
+                                    line_color='gray',
+                                    name='Base Line',
+                                    opacity=0.5),
+                             row=1, col=1)
+
+            # Lagging Span
+            fig.append_trace(go.Scatter(x=dates,
+                                    y=laggingSpan,
+                                    line_color='purple',
+                                    name='Lagging Span',
+                                    opacity=0.5),
                              row=1, col=1)
 
         # Removes non-trading days

@@ -20,12 +20,11 @@ from charting import Chart
 from datetime import date
 
 currentDate = str(date.today()) + " 00:00:00"
-db = StockDatabase()
-ta, chart = TechnicalAnalysis(db), Chart(db)
+db, ta, chart = StockDatabase(), TechnicalAnalysis(), Chart()
 
 # Main
-# db.updateTickerHistory('OPEN')
-chart.showChart("TSLA", "2020-06-20 00:00:00", currentDate, vol=True)
-# ta.movingAverage("TSLA", currentDate, 20)
+# db.updateTickerHistory('TSLA')
+chart.showChart("TSLA", "2020-06-20 00:00:00", currentDate)
+# ta.getIchimokuCloud("TSLA", currentDate)
 # print(ta.movingAverage("TSLA", currentDate, 20))
 # print(ta.getBollingerBands("TSLA", currentDate, 20))

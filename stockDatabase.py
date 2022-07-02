@@ -28,41 +28,50 @@ class StockDatabase:
         self.connection.close()
 
     # Load ticker history into database
-    def loadTickerHistory(self, tickerList):
+    def loadPriceHistory(self, tickerList):
         if type(tickerList) != list:
             tickerList = [tickerList]
         for ticker in tickerList:
-            self.cursor.execute('DROP TABLE IF EXISTS %s_history' % ticker)
+            self.cursor.execute("DROP TABLE IF EXISTS {}_Price_History".format(ticker))
             df = yf.Ticker(ticker).history(period="max", interval="1d")
-            df.to_sql(name=ticker+"_history", con=self.connection)
-            data = pd.read_sql("SELECT * FROM %s_history" % ticker, con=self.connection)
+            df.to_sql(name=ticker+"_Price_History", con=self.connection)
+            data = pd.read_sql("SELECT * FROM {}_Price_History".format(ticker), con=self.connection)
             data.Date = pd.to_datetime(data.Date)
             data.set_index('Date')
         self.connection.commit()
 
-    # Updates ticker history, or creates new table if not existing
-    def updateTickerHistory(self, tickerList):
+    # Updates ticker price history, or creates new table if not existing
+    def updatePriceHistory(self, tickerList):
         if type(tickerList) != list:
             tickerList = [tickerList]
         for ticker in tickerList:
-            tableFound = self.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='%s_history'" % ticker).fetchone() != None
+            tableFound = self.execute("SELECT name FROM sqlite_master WHERE type = 'table' AND name = '{}_Price_History'".format(ticker)).fetchone() != None
             if not tableFound:
-                self.loadTickerHistory(self, ticker)
+                self.loadTickerHistory(ticker)
                 return
             df = yf.Ticker(ticker).history(period="max", interval="1d")
-            dbRows = self.execute("SELECT COUNT(*) FROM '%s_history'" % ticker).fetchone()[0]
+            dbRows = self.execute("SELECT COUNT(*) FROM {}_Price_History".format(ticker)).fetchone()[0]
             dfRows = len(df.index)
             diffTable = df.iloc[dbRows:dfRows]
             diffRows = list(diffTable.itertuples(index=True, name=None))
             for i in range(len(diffTable.index)):
                 row = tuple([str(diffRows[i][0])] + list(diffRows[i][1:]))
-                self.cursor.execute("INSERT INTO '%s_history' VALUES(?,?,?,?,?,?,?,?)" % row)
+                print("INSERT INTO {}_Price_History VALUES {}".format(ticker, row))
+                self.cursor.execute("INSERT INTO {}_Price_History VALUES {}".format(ticker, row))
             self.connection.commit()
 
-    # Returns history (single row) of a given ticker on a specific date
-    def getTickerHistoryOnDate(self, ticker, date):
-        return self.execute("SELECT * FROM %s_history WHERE Date = '%s'" % (ticker, date)).fetchall()
+    # Returns ticker history (single row) of a given ticker on a specific date
+    def getPriceHistoryOn(self, ticker, date):
+        return self.execute("SELECT * FROM {}_Price_History WHERE Date <= '{}' ORDER BY Date DESC LIMIT 1".format(ticker, date)).fetchall()
 
-    # Returns history between two dates (inclusive)
-    def getTickerHistoryBetweenDates(self, ticker, lowerDate, upperDate):
-        return self.execute("SELECT * FROM %s_history WHERE Date BETWEEN '%s' AND '%s'" % (ticker, lowerDate, upperDate)).fetchall()
+    # Returns ticker history between two dates (inclusive)
+    def getPriceHistoryBetween(self, ticker, lowerDate, upperDate):
+        return self.execute("SELECT * FROM {}_Price_History WHERE Date BETWEEN '{}' AND '{}'".format(ticker, lowerDate, upperDate)).fetchall()
+
+    # Returns ticker history before a date with a limit (exclusive)
+    def getPriceHistoryBefore(self, ticker, date, limit):
+        return self.execute("SELECT * FROM {}_Price_History WHERE Date < '{}' ORDER BY Date DESC LIMIT {}".format(ticker, date, limit)).fetchall()
+
+    # Returns column(s) of a ticker history before a date with a limit (exclusive)
+    def getPriceHistoryColsBefore(self, ticker, columns, date, limit):
+        return self.execute("SELECT {} FROM {}_Price_History WHERE Date < '{}' ORDER BY Date DESC LIMIT {}".format(columns, ticker, date, limit)).fetchall()
