@@ -35,7 +35,7 @@ class Chart(TechnicalAnalysis):
             lows.append(row[3])
             closes.append(row[4])
             volumes.append(row[5])
-
+       
         # Initializing chart
         fig = make_subplots(rows=plotRows, cols=1, shared_xaxes=True, subplot_titles=plotTitles, vertical_spacing=0.1, row_width=rowWidths)
 
@@ -212,6 +212,13 @@ class Chart(TechnicalAnalysis):
                                     name='Lower Channel',
                                     opacity=0.5),
                              row=1, col=1)
+            
+        # Financial Events
+        if("earnings" not in kwargs.keys() or kwargs["earnings"] == True):
+            events = self.getFinancialEventHistory(ticker)
+            for event in events:
+                if event[0][:11] + "00:00:00" in dates:
+                    fig.add_vline(x=dt.datetime.strptime(event[0][:11] + "00:00:00", "%Y-%m-%d %H:%M:%S").timestamp() * 1000,line_width=3, row=1, col=1, line_color='rgba(0, 0, 0, 0.075)', annotation=dict(text="EPS EST.: " + str(event[1]) + "<br>EPS ACT.: " + str(event[2]) + "<br>Surprise: " + str(event[3] * 100) + "%", showarrow=False, font=dict(color='black', size=8)))
 
         # Removes non-trading days
         startDate = dt.datetime.strptime(lowerDate, "%Y-%m-%d %H:%M:%S")

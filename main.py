@@ -24,6 +24,7 @@ db, ta, chart = StockDatabase(), TechnicalAnalysis(), Chart()
 
 # Main
 # db.updatePriceHistory('TSLA')
+# db.updateFinancialEvents('TSLA')
 # print(ta.getRSI("TSLA", "2022-07-01 00:00:00"))
 chart.showChart("TSLA", "2020-06-20 00:00:00", currentDate)
 # ta.getIchimokuCloud("TSLA", currentDate)
