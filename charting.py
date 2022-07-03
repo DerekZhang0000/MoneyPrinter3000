@@ -24,11 +24,10 @@ class Chart(TechnicalAnalysis):
         #     plotRows += 1
         #     plotTitles.append("MACD")
         #     rowWidths.insert(0, 0.1)
-        fig = make_subplots(rows=plotRows, cols=1, shared_xaxes=True, subplot_titles=plotTitles, vertical_spacing=0.1, row_width=rowWidths)
-        histRows = self.getPriceHistoryBetween(ticker, lowerDate, upperDate)
 
         # Initializing common values
         dates, opens, highs, lows, closes, volumes = [[], [], [], [], [], []]
+        histRows = self.getPriceHistoryBetween(ticker, lowerDate, upperDate)
         for row in histRows:
             dates.append(row[0])
             opens.append(row[1])
@@ -36,6 +35,9 @@ class Chart(TechnicalAnalysis):
             lows.append(row[3])
             closes.append(row[4])
             volumes.append(row[5])
+
+        # Initializing chart
+        fig = make_subplots(rows=plotRows, cols=1, shared_xaxes=True, subplot_titles=plotTitles, vertical_spacing=0.1, row_width=rowWidths)
 
         # Candlestick chart, always displayed
         fig.append_trace(go.Candlestick(x=dates,
@@ -51,7 +53,8 @@ class Chart(TechnicalAnalysis):
             curRow += 1
             fig.append_trace(go.Bar(x=dates,
                                     y=volumes,
-                                    showlegend=False),
+                                    showlegend=False,
+                                    name="Volume"),
                              row=curRow, col=1)
 
         # RSI
