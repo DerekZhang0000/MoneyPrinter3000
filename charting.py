@@ -16,10 +16,10 @@ class Chart(TechnicalAnalysis):
             plotRows += 1
             plotTitles.append("Volume")
             rowWidths.insert(0, 0.1)
-        # if ("rsi" not in kwargs.keys() or kwargs["rsi"] == True):
-        #     plotRows +=1
-        #     plotTitles.append("RSI")
-        #     rowWidths.insert(0, 0.1)
+        if ("rsi" not in kwargs.keys() or kwargs["rsi"] == True):
+            plotRows +=1
+            plotTitles.append("RSI")
+            rowWidths.insert(0, 0.1)
         # if ("macd" not in kwargs.keys() or kwargs["macd"] == True):
         #     plotRows += 1
         #     plotTitles.append("MACD")
@@ -39,24 +39,34 @@ class Chart(TechnicalAnalysis):
 
         # Candlestick chart, always displayed
         fig.append_trace(go.Candlestick(x=dates,
-                                     open=opens,
-                                     high=highs,
-                                     low=lows,
-                                     close=closes,
-                                     name="Candlestick"),
+                                        open=opens,
+                                        high=highs,
+                                        low=lows,
+                                        close=closes,
+                                        name="Candlestick"),
                          row=1, col=1)
 
         # Volume chart
         if ("vol" not in kwargs.keys() or kwargs["vol"] == True):
             curRow += 1
-            fig.append_trace(go.Bar(x=dates, y=volumes, showlegend=False),
-                                    row=curRow, col=1)
+            fig.append_trace(go.Bar(x=dates,
+                                    y=volumes,
+                                    showlegend=False),
+                             row=curRow, col=1)
 
+        # RSI
+        # NOTE: Uses simplified 14-day method of calculation
         if ("rsi" not in kwargs.keys() or kwargs["rsi"] == True):
             curRow += 1
-            # fig.append_trace(go.Bar(x=dates, y=volumes, showlegend=False),
-            #                         row=curRow, col=1)
+            rsi = [self.getRSI(ticker, date) for date in dates]
+            fig.append_trace(go.Scatter(x=dates,
+                                        y=rsi,
+                                        showlegend=False,
+                                        line_color="mediumvioletred",
+                                        name="RSI (Simplified)"),
+                             row=curRow, col=1)
 
+        # MACD
         if ("macd" not in kwargs.keys() or kwargs["macd"] == True):
             curRow += 1
             # fig.append_trace(go.Bar(x=dates, y=volumes, showlegend=False),
@@ -70,12 +80,14 @@ class Chart(TechnicalAnalysis):
                 fastMovingAverage.append(self.getMovingAverage(ticker, date, 50))
                 slowMovingAverage.append(self.getMovingAverage(ticker, date, 200))
 
+            # 50 Day SMA
             fig.append_trace(go.Scatter(x=dates,
                                     y=fastMovingAverage,
                                     line_color='orange',
                                     name='50MA'),
                              row=1, col=1)
 
+            # 200 Day SMA
             fig.append_trace(go.Scatter(x=dates,
                                      y=slowMovingAverage,
                                      line_color='blue',
@@ -83,7 +95,7 @@ class Chart(TechnicalAnalysis):
                              row=1, col=1)
 
         # Bollinger Bands
-        if("bBands" not in kwargs.keys() or kwargs["bBands"] == True):
+        if("bands" not in kwargs.keys() or kwargs["bands"] == True):
             lowerBand, movingAverage, upperBand = [[], [], []]
 
             for row in histRows:
@@ -102,7 +114,7 @@ class Chart(TechnicalAnalysis):
             # Upper Band
             fig.append_trace(go.Scatter(x=dates,
                                     y=upperBand,
-                                    line_color='lightblue',
+                                    line_color='blueviolet',
                                     name='Upper Band',
                                     opacity=0.5),
                              row=1, col=1)
@@ -110,8 +122,7 @@ class Chart(TechnicalAnalysis):
             # Lower Band
             fig.append_trace(go.Scatter(x=dates,
                                     y=lowerBand,
-                                    line_color='lightblue',
-                                    fill='tonexty',
+                                    line_color='blueviolet',
                                     name='Lower Band',
                                     opacity=0.5),
                              row=1, col=1)
@@ -138,7 +149,7 @@ class Chart(TechnicalAnalysis):
 
             # Leading Span B
             fig.append_trace(go.Scatter(x=dates,
-                                    y=conversionLine,
+                                    y=leadingSpanB,
                                     line_color='red',
                                     name='Leading Span B'),
                              row=1, col=1)
@@ -163,6 +174,39 @@ class Chart(TechnicalAnalysis):
                                     y=laggingSpan,
                                     line_color='purple',
                                     name='Lagging Span',
+                                    opacity=0.5),
+                             row=1, col=1)
+
+        # Donchian Channels
+        if("channels" not in kwargs.keys() or kwargs["channels"] == True):
+            upperChannel, middleChannel, lowerChannel = [[], [], []]
+
+            for row in histRows:
+                donchianChannels = self.getDonchianChannels(ticker, row[0])
+                upperChannel.append(donchianChannels[0])
+                middleChannel.append(donchianChannels[1])
+                lowerChannel.append(donchianChannels[2])
+
+            # Upper Channel
+            fig.append_trace(go.Scatter(x=dates,
+                                    y=upperChannel,
+                                    line_color='gold',
+                                    name='Upper Channel'),
+                             row=1, col=1)
+
+            # Middle Channel
+            fig.append_trace(go.Scatter(x=dates,
+                                    y=middleChannel,
+                                    line_color='greenyellow',
+                                    name='Middle Channel',
+                                    opacity=0.5),
+                             row=1, col=1)
+
+            # Lower Channel
+            fig.append_trace(go.Scatter(x=dates,
+                                    y=lowerChannel,
+                                    line_color='gold',
+                                    name='Lower Channel',
                                     opacity=0.5),
                              row=1, col=1)
 

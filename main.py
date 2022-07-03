@@ -4,9 +4,9 @@
 # 2. Create functions for technical indicators
 # 2.01 Moving Averages DONE
 # 2.1 Bollinger bands DONE
-# 2.2 Ice cream clouds
-# 2.25 Donchian channels
-# 2.3 RSI, MACD, Parabolic SAR, SuperTrend, Aroon, Coppock Curve,
+# 2.2 Ice cream clouds DONE
+# 2.25 Donchian channels DONE
+# 2.3 RSI DONE, MACD, Parabolic SAR, SuperTrend, Aroon, Coppock Curve,
 #     Detrended Price Oscillator, Elliot Wave Oscillator, Money Flow Index,
 #     TTM Squeeze, Vortex Oscillator
 # 3. Identify days of high confidence of price movement (and also magnitude of the movement)
@@ -23,7 +23,8 @@ currentDate = str(date.today()) + " 00:00:00"
 db, ta, chart = StockDatabase(), TechnicalAnalysis(), Chart()
 
 # Main
-# db.updateTickerHistory('TSLA')
+# db.updatePriceHistory('TSLA')
+# print(ta.getRSI("TSLA", "2022-07-01 00:00:00"))
 chart.showChart("TSLA", "2020-06-20 00:00:00", currentDate)
 # ta.getIchimokuCloud("TSLA", currentDate)
 # print(ta.movingAverage("TSLA", currentDate, 20))
